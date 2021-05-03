@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Color Game</title>
+    <style>
+        body{
+            background-color: #00203FFF;
+            /* /border: thick solid blue; */
+        }
+
+        #score{
+            color: white;
+        }
+
+        #game-container {
+            display: block;
+            text-align: center;
+            /* border: thick solid white; */
+        }
+
+        #board {
+            position: relative;
+            display: inline-table;
+            background-color: #ADEFD1FF;
+            /* border: thick solid red; */
+            border-collapse: collapse;
+            width: 640px;
+            height: 640px;
+        }
+
+        #start-game-button-container, #endgamebox {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: inline-table;
+            background-color: white;
+            opacity: 0.55;
+            width: inherit;
+            height: inherit;
+            text-align: center;
+        }
+
+        #startgamebutton, #playagain{
+            color: black;
+            display: inline-block;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            width: 280px;
+            height: 125px;
+            font-size: 50px;
+        }
+
+        #startgamebutton {
+            position: absolute;
+        }
+
+        #endgamebox {
+            display: none;
+        }
+
+        .game-tr {
+            display: table-row; 
+        }
+
+        .cell {
+            display: table-cell;
+            border: 5px solid #ADEFD1FF;
+            width: 50px;
+            height: 75px;
+            padding: 0 10px 0 10px;
+        }
+
+        /* I want to make the endmessage box the same width and height as content, but not sure how*/
+        #endmessage {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            width: 450px;
+            height: 200px;
+            margin: auto;   
+        }
+
+        #playagain {
+            display: none;
+            position: absolute;
+        }
+    </style>
+    <script>
+        var boardCells;
+        var round, currentRound, score;
+        var uniqueColor, commonColor, shadeLevel;
+        var uniqueIndex;
+
+        function setGame() {
+            round = 10;
+            currentRound = 0;
+            score = 0;
+
+            var board = document.getElementById("board");
+            clearBoard(board);
+            drawBoard(board);
+
+            var startGameBtn = document.getElementById("start-game-button-container");
+            if (startGameBtn) startGameBtn.style.display = "none";
+
+            var endGameScreen = document.getElementById("endgamebox");
+            if (endGameScreen) endGameScreen.style.display = "none";
+        }
+
+
+
+        //8x8 game board
+        function drawBoard(board) {
+            boardCells = [];
+
+            for (let i = 0; i < 8; i++) {
+                let row = document.createElement("div");
+                row.classList.add("game-tr");
+
+                
+                for (let j = 0; j < 8; j++) {
+                    let div = document.createElement("div"); //create a cell shown as a div element
+                    div.id = (i * 8) + j;          //id to monitor div content
+                    div.classList.add("cell");      //class for div for easier styling
+                    div.addEventListener("click", cellIsClicked);
+                    
+                    row.appendChild(div);                //create row that sores 8 div
+                }
+                board.appendChild(row);
+                boardCells.push(row);
+            }
+            setTileColor();
+        }
+
+        function clearBoard(board) {
+            //Checks if board contains cells 
+            if (boardCells) {
+                for (let row of boardCells) {
+                    for (let i = 0; i < row.childNodes.length; i++) {
+                        row.removeChild(row.childNodes[i]);
+                    }
+                    board.removeChild(row);
+                }
+            }
+            else {
+                return;
+            }
+        }
+
+        function setTileColor() {
+            shadeLevel = 0.12;
+
+            var red = Math.floor(Math.random() * 256);
+            var green = Math.floor(Math.random() * 256);
+            var blue = Math.floor(Math.random() * 256);
+
+            //In case of rgb(0,0,0), there can be errors, so each color should be >= 30 for now   
+            while (red < 15 || green < 15 || blue < 15) {
+                if (red < 15) red = Math.floor(Math.random() * 256);
+                if (green < 15) green = Math.floor(Math.random() * 256);
+                if (blue < 15) blue = Math.floor(Math.random() * 256);
+            }
+
+            //uniqueColor will be a percentage less than the common color to make it darker
+            commonColor = [red, green, blue];
+            uniqueColor = commonColor.map(colorVal => Math.floor(colorVal * (1 - shadeLevel)));
+
+            //Randomly selectes a unique cell
+            uniqueIndex = Math.floor(Math.random() * 64);
+
+             //Set colors for cells
+            for (let row of boardCells) {
+                // row is a <tr> element so I must loop through its CHILD (cannot directly loop)
+                for (let i = 0; i < row.childNodes.length; i++) {
+                    let node = row.childNodes[i];
+                     //Using != rather than !== to compare string with number 
+                    if (node.id != uniqueIndex) node.style.backgroundColor = "rgb(" + commonColor[0] + "," + commonColor[1] + "," + commonColor[2] + ")";
+                    else {
+                        node.style.backgroundColor = "rgb(" + uniqueColor[0] + "," + uniqueColor[1] + "," + uniqueColor[2] + ")";
+                    }
+                }
+            }
+            /*
+             console.log("rgb(" + commonColor[0] + "," + commonColor[1] + "," + commonColor[2] + ")");
+             boardCells[0][0].style.backgroundColor = "rgb(" + commonColor[0] + "," + commonColor[1] + "," + commonColor[2] + ")";
+             boardCells[1][0].style.backgroundColor = "rgb(" + uniqueColor[0] + "," + uniqueColor[1] + "," + uniqueColor[2] + ")";
+            */
+            
+
+        }
+
+        function cellIsClicked(event) {
+            if (event.target.id == uniqueIndex) {
+                ++score;
+            }
+            else {
+                --score;
+            }
+            currentRound++;
+            document.getElementById("score").innerHTML = "Score: " + score;
+
+            //checks if game is finished, if so, display the score as well as add a reset option
+            if (isGameFinished() === true) {
+                //Make end message visible and display score
+                let endGameBox = document.getElementById("endgamebox");
+                endGameBox.style.display = "inline-table";
+
+                //Make play again option visible and reset game if user wants
+                let playAgainOption = document.getElementById("playagain");
+                playAgainOption.style.display = "block";
+                playAgainOption.innerHTML = "Play Again?";
+
+                let totalScore = document.getElementById("totalscore");
+                totalScore.style.fontSize = "20px";
+                totalScore.innerHTML = "Total Score: " + score;
+
+                for (let row of boardCells) {
+                    for (let i = 0; i < row.childNodes.length; i++) {
+                        row.childNodes[i].removeEventListener("click", cellIsClicked);
+                    }
+                }
+            }
+            else {
+                setTileColor();
+            }
+        }
+
+        function isGameFinished() {
+            return (currentRound === round);
+        }
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="board">
+            <div id="start-game-button-container">
+                <button id="startgamebutton" onclick="setGame()">Start Game</button>
+            </div>
+            <div id="endgamebox">       
+                <div id="endmessage">
+                    <span id="totalscore"></span>
+                    <button id="playagain" onclick="setGame()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>
